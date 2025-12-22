@@ -5,13 +5,17 @@ import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
+import { useSecureFlow } from '@/security';
 
 export default function CompleteScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ walletName: string; mnemonic: string }>();
+  const params = useLocalSearchParams<{ walletName: string; vaultKey: string }>();
   const { createWallet, isLoading } = useWallet();
   const [walletCreated, setWalletCreated] = useState(false);
+  const secureFlow = useSecureFlow();
+  const data = params.vaultKey ? secureFlow.get<{ mnemonic: string }>(params.vaultKey) : null;
+  const mnemonic = data?.mnemonic as string;
 
   useEffect(() => {
     // Auto-create wallet when screen loads
@@ -24,12 +28,11 @@ export default function CompleteScreen() {
 
     try {
       const walletName = params.walletName || 'My Wallet';
-      const mnemonic = params.mnemonic.split(',').join(' ');
 
       // Use the wallet context to create the wallet
       await createWallet({
         name: walletName,
-        mnemonic,
+        mnemonic: mnemonic.split(',').join(' '),
       });
 
       setWalletCreated(true);

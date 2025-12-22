@@ -20,21 +20,34 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
+import { useSecureFlow } from '@/security';
 
 export default function ImportNameWalletScreen() {
   const router = useDebouncedNavigation();
   const navigation = useNavigation();
-  const params = useLocalSearchParams();
+  const { vaultKey } = useLocalSearchParams<{ vaultKey: string }>();
   const insets = useSafeAreaInsets();
   const { createWallet } = useWallet();
   const [walletName, setWalletName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(avatarOptions[0]);
   const [isImporting, setIsImporting] = useState(false);
+  const secureFlow = useSecureFlow();
 
-  // Get the seed phrase from navigation params
-  const seedPhrase = params.seedPhrase ? decodeURIComponent(params.seedPhrase as string) : '';
+  const getSeedPhrase = (): string | undefined => {
+    if (!vaultKey) return undefined;
+    const data = secureFlow.get<{ seedPhrase: string }>(vaultKey);
+    return data?.seedPhrase;
+  };
+
+  React.useEffect(() => {
+    return () => {
+      secureFlow.delete(vaultKey);
+    };
+  }, []);
 
   const handleNext = async () => {
+    const seedPhrase = getSeedPhrase();
+
     if (!seedPhrase) {
       Alert.alert('Error', 'No seed phrase provided. Please go back and enter your seed phrase.');
       return;

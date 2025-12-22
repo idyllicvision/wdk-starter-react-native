@@ -17,10 +17,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
+import { useSecureFlow } from '@/security';
 
 export default function ImportWalletScreen() {
   const router = useDebouncedNavigation();
   const insets = useSafeAreaInsets();
+  const secureFlow = useSecureFlow();
   const [secretWords, setSecretWords] = useState<string[]>(Array(12).fill(''));
 
   const handleWordChange = (index: number, text: string) => {
@@ -97,10 +99,12 @@ export default function ImportWalletScreen() {
       return;
     }
 
+    const vaultKey = secureFlow.put({ seedPhrase });
+
     // Navigate to name wallet screen with the seed phrase
     router.push({
       pathname: './import-name-wallet',
-      params: { seedPhrase: encodeURIComponent(seedPhrase) },
+      params: { vaultKey },
     });
   };
 

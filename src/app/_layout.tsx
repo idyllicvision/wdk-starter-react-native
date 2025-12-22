@@ -11,6 +11,7 @@ import 'react-native-reanimated';
 import getChainsConfig from '@/config/get-chains-config';
 import { Toaster } from 'sonner-native';
 import { colors } from '@/constants/colors';
+import { SecureFlowProvider } from '@/security/secure-flow.context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -57,15 +58,17 @@ export default function RootLayout() {
           }}
         >
           <NavigationThemeProvider value={CustomDarkTheme}>
-            <View style={{ flex: 1, backgroundColor: colors.background }}>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: colors.background },
-                }}
-              />
-              <StatusBar style="light" />
-            </View>
+            <SecureFlowProvider>
+              <View style={{ flex: 1, backgroundColor: colors.background }}>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: colors.background },
+                  }}
+                />
+                <StatusBar style="light" />
+              </View>
+            </SecureFlowProvider>
           </NavigationThemeProvider>
         </WalletProvider>
         <Toaster
