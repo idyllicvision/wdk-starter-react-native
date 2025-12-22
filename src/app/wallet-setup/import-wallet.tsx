@@ -99,12 +99,11 @@ export default function ImportWalletScreen() {
       return;
     }
 
-    const vaultKey = secureFlow.put({ seedPhrase });
+    secureFlow.put({ mnemonic: secretWords });
 
     // Navigate to name wallet screen with the seed phrase
     router.push({
       pathname: './import-name-wallet',
-      params: { vaultKey },
     });
   };
 

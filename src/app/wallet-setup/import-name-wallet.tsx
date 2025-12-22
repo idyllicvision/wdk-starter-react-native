@@ -1,7 +1,6 @@
 import avatarOptions, { setAvatar } from '@/config/avatar-options';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { useWallet } from '@tetherto/wdk-react-native-provider';
-import { useLocalSearchParams } from 'expo-router';
 import { useDebouncedNavigation } from '@/hooks/use-debounced-navigation';
 import { ChevronLeft } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -25,7 +24,6 @@ import { useSecureFlow } from '@/security';
 export default function ImportNameWalletScreen() {
   const router = useDebouncedNavigation();
   const navigation = useNavigation();
-  const { vaultKey } = useLocalSearchParams<{ vaultKey: string }>();
   const insets = useSafeAreaInsets();
   const { createWallet } = useWallet();
   const [walletName, setWalletName] = useState('');
@@ -33,22 +31,10 @@ export default function ImportNameWalletScreen() {
   const [isImporting, setIsImporting] = useState(false);
   const secureFlow = useSecureFlow();
 
-  const getSeedPhrase = (): string | undefined => {
-    if (!vaultKey) return undefined;
-    const data = secureFlow.get<{ seedPhrase: string }>(vaultKey);
-    return data?.seedPhrase;
-  };
-
-  React.useEffect(() => {
-    return () => {
-      secureFlow.delete(vaultKey);
-    };
-  }, []);
-
   const handleNext = async () => {
-    const seedPhrase = getSeedPhrase();
-
-    if (!seedPhrase) {
+    const vaultData = secureFlow.get<{ mnemonic: string[] }>();
+    const mnemonic = vaultData?.mnemonic;
+    if (!mnemonic) {
       Alert.alert('Error', 'No seed phrase provided. Please go back and enter your seed phrase.');
       return;
     }
@@ -57,7 +43,8 @@ export default function ImportNameWalletScreen() {
 
     try {
       // Use the context's createWallet method which handles everything including unlocking
-      await createWallet({ name: walletName, mnemonic: seedPhrase });
+      await createWallet({ name: walletName, mnemonic: mnemonic.join(' ') });
+      secureFlow.clear();
       await setAvatar(selectedAvatar.id);
 
       toast.success('Your wallet has been imported successfully.');

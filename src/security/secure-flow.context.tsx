@@ -12,7 +12,7 @@ export const SecureFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }
 
   const api: SecureFlowApi = {
-    put: (value) => vaultRef.current!.put(value),
+    put: (value: unknown, key?: string) => vaultRef.current!.put(value, key),
     get: (key) => vaultRef.current!.get(key),
     consume: (key) => vaultRef.current!.consume(key),
     delete: (key) => vaultRef.current!.delete(key),

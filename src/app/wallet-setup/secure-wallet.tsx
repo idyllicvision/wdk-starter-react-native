@@ -70,14 +70,11 @@ export default function SecureWalletScreen() {
   const handleNext = () => {
     // Pass wallet data to next screen
 
-    const vaultKey = secureFlow.put({
-      mnemonic: mnemonic.join(','),
-    });
+    secureFlow.put({ mnemonic });
 
     router.push({
       pathname: './confirm-phrase',
       params: {
-        vaultKey,
         walletName: params.walletName,
         avatar: params.avatar,
       },

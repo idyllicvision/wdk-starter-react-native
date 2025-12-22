@@ -14,8 +14,6 @@ export default function CompleteScreen() {
   const { createWallet, isLoading } = useWallet();
   const [walletCreated, setWalletCreated] = useState(false);
   const secureFlow = useSecureFlow();
-  const data = params.vaultKey ? secureFlow.get<{ mnemonic: string }>(params.vaultKey) : null;
-  const mnemonic = data?.mnemonic as string;
 
   useEffect(() => {
     // Auto-create wallet when screen loads
@@ -26,15 +24,18 @@ export default function CompleteScreen() {
   const createWalletWithWDK = async () => {
     if (walletCreated) return;
 
+    const vaultData = secureFlow.get<{ mnemonic: string[] }>();
+    const mnemonic = vaultData?.mnemonic || [];
+
     try {
       const walletName = params.walletName || 'My Wallet';
 
       // Use the wallet context to create the wallet
       await createWallet({
         name: walletName,
-        mnemonic: mnemonic.split(',').join(' '),
+        mnemonic: mnemonic.join(' '),
       });
-
+      secureFlow.clear();
       setWalletCreated(true);
     } catch (error) {
       console.error('Failed to create wallet:', error);
