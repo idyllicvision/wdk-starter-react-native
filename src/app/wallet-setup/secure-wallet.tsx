@@ -8,10 +8,10 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getUniqueId } from 'react-native-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import parseWorkletError from '@/utils/parse-worklet-error';
 import { toast } from 'sonner-native';
 import { colors } from '@/constants/colors';
 import getErrorMessage from '@/utils/get-error-message';
+import { useSecureFlow } from '@/security';
 
 export default function SecureWalletScreen() {
   const router = useDebouncedNavigation();
@@ -24,6 +24,7 @@ export default function SecureWalletScreen() {
   const [showPhrase, setShowPhrase] = useState(true);
   const [isGenerating, setIsGenerating] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const secureFlow = useSecureFlow();
 
   useEffect(() => {
     // Generate mnemonic using WDK on mount
@@ -68,10 +69,12 @@ export default function SecureWalletScreen() {
 
   const handleNext = () => {
     // Pass wallet data to next screen
+
+    secureFlow.put({ mnemonic });
+
     router.push({
       pathname: './confirm-phrase',
       params: {
-        mnemonic: mnemonic.join(','),
         walletName: params.walletName,
         avatar: params.avatar,
       },

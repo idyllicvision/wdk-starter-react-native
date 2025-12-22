@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useDebouncedNavigation } from '@/hooks/use-debounced-navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
 import { colors } from '@/constants/colors';
+import { useSecureFlow } from '@/security';
 
 interface WordPosition {
   position: number;
@@ -16,23 +17,22 @@ export default function ConfirmPhraseScreen() {
   const router = useDebouncedNavigation();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
-    mnemonic?: string;
     walletName?: string;
     avatar?: string;
   }>();
   const [selectedWords, setSelectedWords] = useState<{ [key: number]: string }>({});
   const [wordPositions, setWordPositions] = useState<WordPosition[]>([]);
+  const secureFlow = useSecureFlow();
 
   useEffect(() => {
-    // Parse mnemonic from params
-    const mnemonicString = params.mnemonic as string;
-    if (mnemonicString) {
-      const words = mnemonicString.split(',');
+    const vaultData = secureFlow.get<{ mnemonic: string[] }>();
+    const mnemonic = vaultData?.mnemonic;
 
+    if (mnemonic && mnemonic.length > 0) {
       // Select 4 random positions to verify
       const positions = [2, 4, 6, 11]; // Word #3, #5, #7, #12 (0-indexed + 1)
       const verificationWords: WordPosition[] = positions.map(pos => {
-        const correctWord = words[pos];
+        const correctWord = mnemonic[pos];
         // Generate fake options
         const fakeWords = [
           'galaxy',
@@ -59,7 +59,7 @@ export default function ConfirmPhraseScreen() {
 
       setWordPositions(verificationWords);
     }
-  }, [params.mnemonic]);
+  }, []);
 
   const handleWordSelect = (position: number, word: string) => {
     setSelectedWords(prev => ({
@@ -98,14 +98,12 @@ export default function ConfirmPhraseScreen() {
       setSelectedWords(newSelections);
       return;
     }
-
     // All correct, proceed to completion
     router.push({
       pathname: './complete',
       params: {
         walletName: params.walletName,
         avatar: params.avatar,
-        mnemonic: params.mnemonic,
       },
     });
   };

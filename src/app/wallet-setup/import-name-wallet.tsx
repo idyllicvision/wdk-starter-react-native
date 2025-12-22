@@ -1,7 +1,6 @@
 import avatarOptions, { setAvatar } from '@/config/avatar-options';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { useWallet } from '@tetherto/wdk-react-native-provider';
-import { useLocalSearchParams } from 'expo-router';
 import { useDebouncedNavigation } from '@/hooks/use-debounced-navigation';
 import { ChevronLeft } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -20,22 +19,22 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
+import { useSecureFlow } from '@/security';
 
 export default function ImportNameWalletScreen() {
   const router = useDebouncedNavigation();
   const navigation = useNavigation();
-  const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { createWallet } = useWallet();
   const [walletName, setWalletName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(avatarOptions[0]);
   const [isImporting, setIsImporting] = useState(false);
-
-  // Get the seed phrase from navigation params
-  const seedPhrase = params.seedPhrase ? decodeURIComponent(params.seedPhrase as string) : '';
+  const secureFlow = useSecureFlow();
 
   const handleNext = async () => {
-    if (!seedPhrase) {
+    const vaultData = secureFlow.get<{ mnemonic: string[] }>();
+    const mnemonic = vaultData?.mnemonic;
+    if (!mnemonic) {
       Alert.alert('Error', 'No seed phrase provided. Please go back and enter your seed phrase.');
       return;
     }
@@ -44,7 +43,8 @@ export default function ImportNameWalletScreen() {
 
     try {
       // Use the context's createWallet method which handles everything including unlocking
-      await createWallet({ name: walletName, mnemonic: seedPhrase });
+      await createWallet({ name: walletName, mnemonic: mnemonic.join(' ') });
+      secureFlow.clear();
       await setAvatar(selectedAvatar.id);
 
       toast.success('Your wallet has been imported successfully.');
